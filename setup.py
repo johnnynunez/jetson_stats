@@ -17,19 +17,17 @@
 
 # This file is kept for its custom installation logic, which is not supported
 # by pyproject.toml declaratively. All package metadata has been moved to
-# pyproject.toml. Note that this custom logic relies on installing from a
-# source distribution (sdist) and will likely fail if installing from a wheel.
+# pyproject.toml.
 
 from setuptools import setup
 from setuptools.command.develop import develop
 from setuptools.command.install import install
-from jtop.service import status_service, remove_service_pipe, uninstall_service, set_service_permission, unset_service_permission, install_service
-from jtop.core.jetson_variables import uninstall_variables, install_variables
-from jtop.terminal_colors import bcolors
 import os
 import sys
 import logging
 import shutil
+
+# No more imports from `jtop` at the top level
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 log = logging.getLogger()
@@ -51,27 +49,33 @@ def is_docker():
     # https://gist.github.com/anantkamath/623ce7f5432680749e087cf8cfba9b69
     # https://stackoverflow.com/questions/68816329/how-to-get-docker-container-id-from-within-the-container-with-cgroup-v2
     def check_mountinfo():
-        with open('/proc/self/mountinfo', 'r') as file:
-            line = file.readline().strip()
-            while line:
-                if '/docker/containers/' in line or '/docker/volumes/buildx_buildkit_builder' in line:
-                    return True
+        try:
+            with open('/proc/self/mountinfo', 'r') as file:
                 line = file.readline().strip()
+                while line:
+                    if '/docker/containers/' in line or '/docker/volumes/buildx_buildkit_builder' in line:
+                        return True
+                    line = file.readline().strip()
+        except FileNotFoundError:
+            return False
         return False
     # Check on cgroup
-    with open('/proc/self/cgroup', 'r') as procfile:
-        for line in procfile:
-            # if is the new cgroup v2 check on mountinfo
-            if line.startswith("0::/"):
-                return check_mountinfo()
-            fields = line.strip().split('/')
-            if 'docker' in fields or 'buildkit' in fields:
-                return True
+    try:
+        with open('/proc/self/cgroup', 'r') as procfile:
+            for line in procfile:
+                # if is the new cgroup v2 check on mountinfo
+                if line.startswith("0::/"):
+                    return check_mountinfo()
+                fields = line.strip().split('/')
+                if 'docker' in fields or 'buildkit' in fields:
+                    return True
+    except FileNotFoundError:
+        return False
     return False
 
 
 def is_superuser():
-    return os.getuid() == 0
+    return hasattr(os, 'getuid') and os.getuid() == 0
 
 
 def remove_data(file_name):
@@ -86,8 +90,12 @@ def remove_data(file_name):
 
 def remove_deprecated_data():
     """
-    This function uninstall the service
+    This function uninstall the service. Imports are moved inside to avoid ModuleNotFoundError.
     """
+    # Imports are moved inside the function to avoid ModuleNotFoundError during build
+    from jtop.service import uninstall_service, unset_service_permission
+    from jtop.core.jetson_variables import uninstall_variables
+
     # If exist, remove old services names if they exists
     uninstall_service('jetson_performance.service')
     uninstall_service('jetson_stats_boot.service')
@@ -107,6 +115,14 @@ def remove_deprecated_data():
 
 
 def pypi_installer(installer, obj, copy):
+    """
+    Main installer logic. Imports are moved inside to avoid ModuleNotFoundError during build.
+    """
+    # Imports moved inside the function
+    from jtop.service import status_service, remove_service_pipe, uninstall_service, set_service_permission
+    from jtop.core.jetson_variables import uninstall_variables, install_variables
+    from jtop.terminal_colors import bcolors
+
     print("Install status:")
     print(" - [{status}] super_user".format(status="X" if is_superuser() else " "))
     print(" - [{status}] virtualenv".format(status="X" if is_virtualenv() else " "))
