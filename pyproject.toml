@@ -38,9 +38,6 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
     "Operating System :: POSIX :: Linux",
 ]
 keywords = [
@@ -83,7 +80,8 @@ docs = [
     "zipp>=3.19.1",
 ]
 test = [
-    "check-manifest==0.41",
+    # Updated to a modern version that doesn't use distutils
+    "check-manifest>=0.49",
     "flake8",
     "pytest",
 ]
