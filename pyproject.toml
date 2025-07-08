@@ -45,7 +45,6 @@ keywords = [
     "nvidia", "Jetson", "Orin", "AGXOrin", "Xavier", "AGXXavier", "XavierNX",
     "Nano", "TX1", "TX2", "process", "viewer",
 ]
-# Dependencies from requirements.txt
 dependencies = [
     "smbus2",
     "distro",
@@ -80,7 +79,6 @@ docs = [
     "zipp>=3.19.1",
 ]
 test = [
-    # Updated to a modern version that doesn't use distutils
     "check-manifest>=0.49",
     "flake8",
     "pytest",
@@ -93,3 +91,16 @@ zip-safe = false
 
 [tool.setuptools.dynamic]
 version = {attr = "jtop.__version__"}
+
+[tool.check-manifest]
+ignore = [
+    ".github/**",
+    ".dockerignore",
+    "tox.ini",
+    "Dockerfile",
+    "tests/**",
+    "docs/**",
+    "examples/**",
+    "jtop/tests/**",
+    "jtop/tests_gui/**",
+]
